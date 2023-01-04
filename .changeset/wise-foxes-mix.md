@@ -1,5 +1,0 @@
----
-"typedots": patch
----
-
-Initial release
