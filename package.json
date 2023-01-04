@@ -1,0 +1,58 @@
+{
+  "name": "typedots",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "A simple way to get and set object properties using paths (aka dot notation) with TypeScript support",
+  "author": "Charles Gruenais",
+  "license": "MIT",
+  "keywords": [
+    "Object path",
+    "Path",
+    "Dot notation",
+    "Strongly typed objects",
+    "Access",
+    "Object hierarchy",
+    "Navigation",
+    "Traversal",
+    "Data structure",
+    "Property access",
+    "Nested objects",
+    "Data retrieval",
+    "Type safety",
+    "Code completion",
+    "Reflection",
+    "TypeScript",
+    "Autocompletion",
+    "Suggestions"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "changeset": "changeset",
+    "release": "changeset publish",
+    "build": "rollup --config rollup.config.ts --configPlugin typescript",
+    "coverage": "vitest run --coverage",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.4.8",
+    "@changesets/cli": "^2.26.0",
+    "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-typescript": "^10.0.1",
+    "@yungezeit/eslint-config-typescript": "^0.0.9",
+    "eslint": "^8.31.0",
+    "rollup": "^3.9.1",
+    "rollup-plugin-dts": "^5.1.0",
+    "typescript": "^4.9.4",
+    "vitest": "^0.26.2"
+  }
+}

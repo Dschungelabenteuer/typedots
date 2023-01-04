@@ -1,0 +1,6 @@
+{
+  "extends": "@yungezeit/typescript",
+  "rules": {
+    "@typescript-eslint/indent": "off"
+  }
+}
