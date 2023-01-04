@@ -47,7 +47,7 @@
   ],
   "scripts": {
     "changeset": "changeset",
-    "release": "changeset publish",
+    "release": "pnpm build && changeset publish",
     "build": "rollup --config rollup.config.ts --configPlugin typescript",
     "coverage": "vitest run --coverage",
     "test": "vitest"
