@@ -5,7 +5,16 @@
   "description": "A simple way to get and set object properties using paths (aka dot notation) with TypeScript support",
   "author": "Charles Gruenais",
   "license": "MIT",
+  "homepage": "https://github.com/Dschungelabenteuer/typedots/tree/main/#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dschungelabenteuer/typedots"
+  },
+  "bugs": {
+    "url": "https://github.com/Dschungelabenteuer/typedots/issues"
+  },
   "keywords": [
+    "Typedots",
     "Object path",
     "Path",
     "Dot notation",
