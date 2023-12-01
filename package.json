@@ -52,7 +52,9 @@
     "coverage": "vitest run --coverage",
     "check": "pnpm lint && pnpm test",
     "lint": "eslint --ext .ts .",
-    "test": "vitest"
+    "test": "vitest",
+    "changeset:release": "pnpm build && changeset publish",
+    "changeset:version": "changeset version && pnpm install --lockfile-only"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
