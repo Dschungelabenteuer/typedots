@@ -2,6 +2,7 @@
   "eslint.validate": ["markdown", "javascript", "yaml", "json", "jsonc", "json5"],
   "eslint.lintTask.enable": true,
   "eslint.alwaysShowStatus": true,
+  "prettier.enable": false,
   "editor.tabSize": 2,
   "editor.codeActionsOnSave": { "source.fixAll": true },
   "files.eol": "\n",

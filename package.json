@@ -53,15 +53,15 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.4.8",
-    "@changesets/cli": "^2.26.0",
-    "@rollup/plugin-replace": "^5.0.2",
-    "@rollup/plugin-typescript": "^10.0.1",
-    "@yungezeit/eslint-config-typescript": "^0.0.9",
-    "eslint": "^8.31.0",
-    "rollup": "^3.9.1",
-    "rollup-plugin-dts": "^5.1.0",
-    "typescript": "^4.9.4",
-    "vitest": "^0.26.2"
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.1",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@yungezeit/eslint-config-typescript": "^0.0.13",
+    "eslint": "^8.54.0",
+    "rollup": "^4.6.1",
+    "rollup-plugin-dts": "^6.1.0",
+    "typescript": "^5.3.2",
+    "vitest": "^0.34.6"
   }
 }
