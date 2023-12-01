@@ -50,6 +50,8 @@
     "release": "pnpm build && changeset publish",
     "build": "rollup --config rollup.config.ts --configPlugin typescript",
     "coverage": "vitest run --coverage",
+    "check": "pnpm lint && pnpm test",
+    "lint": "eslint --ext .ts .",
     "test": "vitest"
   },
   "devDependencies": {
@@ -61,6 +63,7 @@
     "eslint": "^8.54.0",
     "rollup": "^4.6.1",
     "rollup-plugin-dts": "^6.1.0",
+    "tslib": "^2.6.2",
     "typescript": "^5.3.2",
     "vitest": "^0.34.6"
   }
