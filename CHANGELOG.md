@@ -1,5 +1,11 @@
 # typedots
 
+## 0.0.3
+
+### Patch Changes
+
+- 889630b: Allowed extracting paths of nullable object properties
+
 ## 0.0.2
 
 ### Patch Changes
