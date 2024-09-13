@@ -1,5 +1,11 @@
 # typedots
 
+## 0.0.4
+
+### Patch Changes
+
+- 1b52cc9: Fixed path to types
+
 ## 0.0.3
 
 ### Patch Changes
