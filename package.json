@@ -1,7 +1,7 @@
 {
   "name": "typedots",
   "type": "module",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "A simple way to get and set object properties using paths (aka dot notation) with TypeScript support",
   "author": "Charles Gruenais",
   "license": "MIT",
