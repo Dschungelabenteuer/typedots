@@ -1,111 +1,51 @@
 import type { DefaultTypedotsParams } from '.';
-import type { AnyObject, ValueOf, Matcher, Join } from './generic';
 import type { baseObject } from '../mocks';
+import type { AcceptNullable, AnyObject, Join, Matcher } from './generic';
 
-export type AcceptNullable<T> = Exclude<T, null | undefined>;
-
-export type FormatPath<Key> = Key extends `${string}.${string}`
-  ? `(${Key})`
-  : `${Key & string}`;
-
-export type ExtractObjectSubpaths<
-  BaseObject,
-  ParentKey extends string,
-  ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = ValueOf<{
-  [Key in keyof BaseObject as Matcher<Key, string, PreventDistribution>]:
-    | ObjectPaths<BaseObject, Key, ParentKey, ExpectedType, PreventDistribution>
-    | SimplePath<BaseObject, Key, ParentKey, ExpectedType, PreventDistribution>
-}> & string;
-
-export type ObjectPaths<
-  BaseObject,
-  Property extends keyof BaseObject,
-  ParentProperty extends string,
-  ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = Matcher<
-  AcceptNullable<BaseObject[Property]>,
-  AnyObject,
-  PreventDistribution,
-  Join<[
-    Matcher<ParentProperty, string, PreventDistribution>,
-    `${ExtractObjectSubpaths<
-        AcceptNullable<BaseObject[Property]>,
-        Matcher<Property, string, PreventDistribution>,
-        ExpectedType,
-        PreventDistribution
-    >}`,
-  ]>
->;
-
-export type SimplePath<
-  BaseObject,
-  Property extends keyof BaseObject,
-  ParentProperty extends string,
-  ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = Matcher<
-  AcceptNullable<BaseObject[Property]>,
+type ObjectPaths<
+  T,
   ExpectedType,
-  PreventDistribution,
-  Join<[
-    `${FormatPath<ParentProperty>}`,
-    `${FormatPath<Matcher<Property, string, PreventDistribution>>}`,
-  ]>
->;
-
-export type PropertyPath<
-  BaseObject,
-  Property extends keyof BaseObject,
-  ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = Matcher<
-  AcceptNullable<BaseObject[Property]>,
-  ExpectedType,
-  PreventDistribution,
-  Property
->;
-
-export type SubpropertyPaths<
-  BaseObject,
-  Property extends keyof BaseObject,
-  ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = Matcher<
-  AcceptNullable<BaseObject[Property]>,
-  AnyObject,
-  PreventDistribution,
-  ExtractObjectSubpaths<
-    AcceptNullable<BaseObject[Property]>,
-    Matcher<Property, string, PreventDistribution>,
-    ExpectedType,
-    PreventDistribution
-  >
->;
+  PreventDistribution extends boolean,
+  Prefix extends string = ""
+> = T extends never
+  ? never
+  : {
+    [K in keyof T & string]: AcceptNullable<T[K]> extends AnyObject
+        ?
+          | Matcher<T[K], Join<Prefix, K>, ExpectedType, PreventDistribution>
+          | ObjectPaths<AcceptNullable<T[K]>, ExpectedType, PreventDistribution, `${Join<Prefix, K>}.`>
+        : Matcher<T[K], Join<Prefix, K>, ExpectedType, PreventDistribution>;
+    }[keyof T & string];
 
 export type ExtractObjectPaths<
-  BaseObject,
+  T,
   ExpectedType = DefaultTypedotsParams['expectedType'],
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-> = ValueOf<{
-  [Key in keyof BaseObject as Matcher<Key, string, PreventDistribution>]:
-  | FormatPath<PropertyPath<BaseObject, Key, ExpectedType, PreventDistribution>>
-  | SubpropertyPaths<BaseObject, Key, ExpectedType, PreventDistribution>
-}> & string;
+  PreventDistribution extends boolean = DefaultTypedotsParams['preventDistribution'],
+> = ObjectPaths<T, ExpectedType, PreventDistribution>;
 
 if (import.meta.vitest) {
   const { describe, it, assertType } = import.meta.vitest;
 
   describe('ExtractObjectPaths', () => {
     it('should return correct keys', () => {
-      const paths = '' as ExtractObjectPaths<typeof baseObject>;
-      assertType<'prop4' | 'prop1' | 'prop2' | 'prop3' | 'prop3.subprop1' | 'prop3.subprop2' | 'prop3.subprop3.one' | 'prop3.subprop3.two' | 'prop3.subprop3.three' | 'prop3.subprop3' | '(prop.5)' | '(prop.5).nested' | '(prop.5).(another.sub.prop)'>(paths);
+      type TestedType = ExtractObjectPaths<typeof baseObject>;
+      assertType<TestedType>('prop4');
+      assertType<TestedType>('prop1');
+      assertType<TestedType>('prop2');
+      assertType<TestedType>('prop3');
+      assertType<TestedType>('prop3.subprop1');
+      assertType<TestedType>('prop3.subprop2');
+      assertType<TestedType>('prop3.subprop3.one');
+      assertType<TestedType>('prop3.subprop3.two');
+      assertType<TestedType>('prop3.subprop3.three');
+      assertType<TestedType>('prop3.subprop3');
+      assertType<TestedType>('(prop.5)');
+      assertType<TestedType>('(prop.5).nested');
+      assertType<TestedType>('(prop.5).(another.sub.prop)');
     });
 
     it('should ignore strict null checks (root)', () => {
-      const paths = '' as ExtractObjectPaths<{
+      type TestedType = ExtractObjectPaths<{
         prop1?: string;
         prop2?: string | null;
         prop3?: string | undefined;
@@ -114,21 +54,35 @@ if (import.meta.vitest) {
         prop6: string | undefined;
         prop7: string | null | undefined;
       }>;
-      assertType<'prop1' | 'prop2' | 'prop3' | 'prop4' | 'prop5' | 'prop6' | 'prop7'>(paths);
+
+      assertType<TestedType>('prop1');
+      assertType<TestedType>('prop2');
+      assertType<TestedType>('prop3');
+      assertType<TestedType>('prop4');
+      assertType<TestedType>('prop5');
+      assertType<TestedType>('prop6');
+      assertType<TestedType>('prop7');
     });
 
     it('should ignore strict null checks (object property)', () => {
-      const paths = '' as ExtractObjectPaths<{
+      type TestedType = ExtractObjectPaths<{
         prop1?: { item: string };
         prop2?: { item: string } | null;
         prop3?: { item: string } | undefined;
         prop4?: { item: string } | null | undefined;
       }>;
-      assertType<'prop1' | 'prop1.item' | 'prop2' | 'prop2.item' | 'prop3' | 'prop3.item' | 'prop4' | 'prop4.item' | 'prop5' | 'prop5.item' | 'prop6' | 'prop6.item' | 'prop7' | 'prop7.item'>(paths);
+      assertType<TestedType>('prop1');
+      assertType<TestedType>('prop1.item');
+      assertType<TestedType>('prop2');
+      assertType<TestedType>('prop2.item');
+      assertType<TestedType>('prop3');
+      assertType<TestedType>('prop3.item');
+      assertType<TestedType>('prop4');
+      assertType<TestedType>('prop4.item');
     });
 
     it('should ignore strict null checks (object property children)', () => {
-      const paths = '' as ExtractObjectPaths<{
+      type TestedType = ExtractObjectPaths<{
         parent: {
           prop1?: string;
           prop2?: string | null;
@@ -139,24 +93,92 @@ if (import.meta.vitest) {
           prop7: string | null | undefined;
         }
       }>;
-      assertType<'parent' | 'parent.prop1' | 'parent.prop2' | 'parent.prop3' | 'parent.prop4' | 'parent.prop5' | 'parent.prop6' | 'parent.prop7'>(paths);
+
+      assertType<TestedType>('parent');
+      assertType<TestedType>('parent.prop1');
+      assertType<TestedType>('parent.prop2');
+      assertType<TestedType>('parent.prop3');
+      assertType<TestedType>('parent.prop4');
+      assertType<TestedType>('parent.prop5');
+      assertType<TestedType>('parent.prop6');
+      assertType<TestedType>('parent.prop7');
     });
 
     it('should work with variable property names', () => {
       const variableName = 'prop2';
-      const paths = '' as ExtractObjectPaths<{
+      type TestedType = ExtractObjectPaths<{
         'prop1': string;
         [variableName]: string;
       }>;
-      assertType<'prop1' | 'prop2'>(paths);
+      assertType<TestedType>('prop1');
+      assertType<TestedType>('prop2');
     });
 
     it('should wrap properties containing a dot', () => {
-      const paths = '' as ExtractObjectPaths<{
+      type TestedType = ExtractObjectPaths<{
         'prop.1': string;
         prop2: { 'prop2.child': string };
       }>;
-      assertType<'(prop.1)' | 'prop2' | 'prop2.(prop2.child)'>(paths);
+      assertType<TestedType>('(prop.1)');
+      assertType<TestedType>('prop2');
+      assertType<TestedType>('prop2.(prop2.child)');
+    });
+
+    it('should handle `expectedType` correctly', () => {
+      interface BaseTestedType {
+        myProperty: "value of my property",
+        myMethod: (message: string) => string,
+        helpers: {
+          maxLength: 255,
+          count(item: unknown[]): number,
+        },
+      }
+      type TestedFnType = ExtractObjectPaths<BaseTestedType, (args: any) => any>;
+      type TestedStringType = ExtractObjectPaths<BaseTestedType, string>;
+      type TestedNumberType = ExtractObjectPaths<BaseTestedType, number>;
+
+      assertType<TestedFnType>('myMethod');
+      assertType<TestedFnType>('helpers.count');
+      assertType<TestedStringType>('myProperty');
+      assertType<TestedNumberType>('helpers.maxLength');
+    });
+
+    it('should handle `preventDistribution` correctly', () => {
+      interface BaseTestedType { one: false, two: true, three: boolean }
+
+      type TestedTrueType = ExtractObjectPaths<BaseTestedType, true>;
+      // This matches because of boolean distribution.
+      assertType<TestedTrueType>('three');
+      // This matches because it is explicitly `true`.
+      assertType<TestedTrueType>('two');
+      // @ts-expect-error This should not match!
+      assertType<TestedTrueType>('one');
+
+
+      type TestedUndistributedTrueType = ExtractObjectPaths<BaseTestedType, true, true>;
+      // @ts-expect-error This should not match because boolean distribution is prevented!
+      assertType<TestedUndistributedTrueType>('three');
+      // This matches because it is explicitly `true`.
+      assertType<TestedUndistributedTrueType>('two');
+      // @ts-expect-error This should not match!
+      assertType<TestedTrueDType>('one');
+
+
+      type TestedFalseType = ExtractObjectPaths<BaseTestedType, false>;
+       // This matches because of boolean distribution.
+      assertType<TestedFalseType>('three');
+      // This matches because it is explicitly `false`.
+      assertType<TestedFalseType>('one');
+      // @ts-expect-error This should not match!
+      assertType<TestedFalseType>('two');
+
+      type TestedUndistributedFalseType = ExtractObjectPaths<BaseTestedType, false, true>;
+      // @ts-expect-error This should not match because boolean distribution is prevented!
+     assertType<TestedUndistributedFalseType>('three');
+     // This matches because it is explicitly `false`.
+     assertType<TestedUndistributedFalseType>('one');
+     // @ts-expect-error This should not match!
+     assertType<TestedUndistributedFalseType>('two');
     });
   });
 }

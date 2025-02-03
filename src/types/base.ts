@@ -2,15 +2,13 @@ import type { GetMethod } from './get';
 import type { SetMethod } from './set';
 import type { HasMethod } from './has';
 
-export type TypedotsParams = {
+export interface TypedotsParams {
   expectedType?: any;
-  strictMode?: boolean;
-  preventDistribution?: boolean;
-};
+  preventDistribution: boolean;
+}
 
 export type DefaultTypedotsParams = TypedotsParams & {
   expectedType: any;
-  strictMode: false;
   preventDistribution: false;
 };
 

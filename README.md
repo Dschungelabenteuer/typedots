@@ -10,15 +10,16 @@
 ## Features
 
 ### Runtime
-* [X] Get object property value from path: `get(obj, 'prop.subprop')`
-* [X] Set object property value from path: `set(obj, 'prop.subprop', 'value')`
-* [X] Check if object has property from path: `has(obj, 'prop.subprop')`
-* [X] Supports property names containing dots: `{'my.property': true}`
 
-### While developing
-* [X] Path argument is autocompleted based on the object you pass.
-* [X] Strict mode to force path argument to only match possible paths.
-* [X] Ability to filter out suggested paths based on a given type.
+- [x] Get object property value from path: `get(obj, 'prop.subprop')`
+- [x] Set object property value from path: `set(obj, 'prop.subprop', 'value')`
+- [x] Check if object has property from path: `has(obj, 'prop.subprop')`
+- [x] Supports property names containing dots: `{'my.property': true}`
+
+### Type system (while developing)
+
+- [x] Path argument is autocompleted based on the object you pass.
+- [x] Ability to filter out suggested paths based on a given type.
 
 ## Install
 
@@ -40,16 +41,19 @@ There are two ways of consuming typedots depending on your needs and preferences
 ### Directly use base methods
 
 ```ts
-import { get, set, has } from 'typedots';
+import { get, set, has } from "typedots";
 ```
 
 ### Advanced use through class
+
 The class implements the exact same base methods.
+
 ```ts
-import Typedots from 'typedots';
+import Typedots from "typedots";
 
 const td = new Typedots(); // td.get, td.set, td.has
 ```
+
 It is mainly used to get finer control over the way typedots' type system behaves as further explored in [Advanced usage](#advanced-usage).
 
 ## Methods
@@ -189,7 +193,7 @@ It is mainly used to get finer control over the way typedots' type system behave
 </table>
 
 > **Note**
->  When one of the properties in the path contains a dot, such property should be wrapped with parentheses so that it does not conflict with typedots inner workings. e.g. `"sites.(my.host.com).ip"`
+> When one of the properties in the path contains a dot, such property should be wrapped with parentheses so that it does not conflict with typedots inner workings. e.g. `"sites.(my.host.com).ip"`
 
 ## Advanced usage
 
@@ -202,7 +206,6 @@ Both behaviours may be tweaked by making use of the `Typedots` class instead of 
 ```ts
 export interface TypedotsParams = {
   expectedType?: any;
-  strictMode?: boolean;
   preventDistribution?: boolean;
 }
 ```
@@ -213,13 +216,18 @@ You may want to add some constraints to the list of suggested paths. To achieve 
 
 ```ts
 const obj = {
-  myProperty: 'value of my property',
+  myProperty: "value of my property",
   myMethod: (message) => `received ${message}`,
-  helpers: { maxLength: 255, count(item) { return item.length; } },
+  helpers: {
+    maxLength: 255,
+    count(item) {
+      return item.length;
+    },
+  },
 };
 
 const typedots = new Typedots<{ expectedType: (...args: any) => any }>();
-const method = typedots.get(obj, ''); // <-- should only suggest "myMethod" and "helpers.count"
+const method = typedots.get(obj, ""); // <-- should only suggest "myMethod" and "helpers.count"
 ```
 
 Please note that typedots relies on TypeScript's own type inference mechanism. This means its behaviour may be influenced by TypeScript's configuration.
@@ -231,12 +239,12 @@ For example, [`strictNullChecks`](https://www.typescriptlang.org/tsconfig#strict
 ```ts
 /** > When `strictNullChecks: false`: */
 // infered as { prop, string un: any }
-const obj = { prop: 'some string', un: undefined };
+const obj = { prop: "some string", un: undefined };
 new Typedots<{ expectedType: string }>(); // suggests "prop" | "un"
 
 /** > When `strictNullChecks: true`: */
 // infered as { prop: string, un: undefined }
-const obj = { prop: 'some string', un: undefined };
+const obj = { prop: "some string", un: undefined };
 new Typedots<{ expectedType: string }>(); // suggests "prop"
 ```
 
@@ -259,47 +267,17 @@ You may want to go even stricter by preventing boolean to be distributed when ex
 ```ts
 // infered as { one: boolean, two: boolean, tree: boolean }
 const obj = { one: false, two: true, three: true as boolean };
-new Typedots<{ expectedType: true, preventDistribution: true }>(); // no suggestion
+new Typedots<{ expectedType: true; preventDistribution: true }>(); // no suggestion
 
 // infered as { one: false, two: true, tree: boolean }
 const obj = { one: false, two: true, three: true as boolean } as const;
-new Typedots<{ expectedType: true, preventDistribution: true }>(); // suggests "two"
-```
-
-### Strict mode
-
-You can get TypeScript to ensure you're actually using one of the suggested paths, and not any other string. To achieve this, you can use typedots' class and set the `strictMode` parameter in its generic type. Once set, TypeScript should raise errors any time you set the `path` arguments to a string value which was not suggested.
-
-```ts
-const obj = {
-  myProperty: 'value of my property',
-  myMethod: (message) => `received ${message}`,
-  helpers: { maxLength: 255, count(item) { return item.length; } },
-};
-
-const typedots = new Typedots<{ strictMode: true }>();
-typedots.get(obj, 'myProperty'); // <-- works!
-typedots.get(obj, 'helpers.maxLength'); // <-- works!
-typedots.get(obj, 'oops'); // <-- should raise a TypeScript error
-typedots.get(obj, 'helpers.oops'); // <-- should raise a TypeScript error
-```
-
-Note that both `expectedType` and `strictMode` can be combined to work together:
-
-```ts
-const typedots = new Typedots<{
-  strictMode: true,
-  expectedType: (...args: any) => any },
-}>();
-typedots.get(obj, 'myMethod'); // <-- works!
-typedots.get(obj, 'helpers.count'); // <-- works!
-typedots.get(obj, 'myProperty'); // <-- should raise a TypeScript error
-typedots.get(obj, 'helpers.maxLength'); // <-- should raise a TypeScript error
+new Typedots<{ expectedType: true; preventDistribution: true }>(); // suggests "two"
 ```
 
 ### Exported type
 
 The type which powers the suggestion system is exported as `ExtractObjectPaths`, you may be interested in using it even if you're not actually using the runtime methods. It takes three generic parameters:
+
 1. `BaseObject`, which extends any non-null object.
 2. `ExpectedType`, see [Filter out suggestions by type](#filter-out-suggestions-by-type)
 3. `PreventDistribution`, see [Boolean distributivity](#boolean-distributivity)
@@ -307,38 +285,38 @@ The type which powers the suggestion system is exported as `ExtractObjectPaths`,
 ## Examples
 
 ```ts
-import { get, set, has } from 'typedots';
+import { get, set, has } from "typedots";
 
-const variableName = 'content';
+const variableName = "content";
 const baseObject = {
   prop1: true,
   prop2: false,
   prop3: {
-    subprop1: 'string',
-    subprop2: ['first', 2_000, { third: undefined }],
+    subprop1: "string",
+    subprop2: ["first", 2_000, { third: undefined }],
     subprop3: { one: true, two: true, three: false },
     subprop4: undefined,
   },
   [variableName]: {},
-  'prop.5': { nested: 'string', 'another.sub.prop': {} },
+  "prop.5": { nested: "string", "another.sub.prop": {} },
 };
 
-get(baseObject, 'prop1'); // true
-get(baseObject, 'prop3.subprop1'); // "string"
-get(baseObject, 'prop3.subprop3.three'); // false
-get(baseObject, '(prop.5).nested'); // 'string'
-get(baseObject, 'content'); // {}
+get(baseObject, "prop1"); // true
+get(baseObject, "prop3.subprop1"); // "string"
+get(baseObject, "prop3.subprop3.three"); // false
+get(baseObject, "(prop.5).nested"); // 'string'
+get(baseObject, "content"); // {}
 get(baseObject, variableName); // {}
 
-set(baseObject, 'prop1', value); // true
-set(baseObject, 'prop100', value, false); // false
-set(baseObject, 'prop100', value); // true
-set(baseObject, 'prop2.child', value, false); // false
-set(baseObject, 'prop2.child', value); // true
+set(baseObject, "prop1", value); // true
+set(baseObject, "prop100", value, false); // false
+set(baseObject, "prop100", value); // true
+set(baseObject, "prop2.child", value, false); // false
+set(baseObject, "prop2.child", value); // true
 
-has(baseObject, 'prop1'); // true
-has(baseObject, 'prop3.NOOP'); // false
-has(baseObject, 'NOPE'); // false
-has(baseObject, 'prop3.subprop4'); // true
-has(baseObject, '(prop.5).(another.sub.prop)'); // true
+has(baseObject, "prop1"); // true
+has(baseObject, "prop3.NOOP"); // false
+has(baseObject, "NOPE"); // false
+has(baseObject, "prop3.subprop4"); // true
+has(baseObject, "(prop.5).(another.sub.prop)"); // true
 ```

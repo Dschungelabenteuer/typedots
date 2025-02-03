@@ -1,34 +1,64 @@
-import type { DefaultTypedotsParams } from '.';
+export type PathParams<T, Rest> = { first: T, rest: Rest };
+export type AnyObject = Record<string, unknown>;
+export type AcceptNullable<T> = Exclude<T, null | undefined>;
 
-export type ValueOf<T> = T[keyof T];
-
-export type AnyObject = { [k: string]: unknown };
-
-export type AnyOtherString = string & Record<never, never>;
+export type SanitizeKey<Key, DoSanitize extends boolean> = DoSanitize extends true
+ ? Key extends `${string}.${string}` ? `(${Key})` : Key & string
+ : Key
 
 export type Join<
-  Strings extends string[],
-  Separator extends string = '.',
-  Start = true,
-> = Strings extends [infer Current, ...infer Rest]
-  ? Current extends string
-    ? Rest extends string[]
-      ? Start extends true
-        ? `${Current}${Join<Rest, Separator, false>}`
-        : `${Separator}${Current}${Join<Rest, Separator, Start>}`
-      : never
-    : never
-  : '';
+  Prefix extends string = '',
+  Key extends string = '',
+  DoSanitize extends boolean = true
+> = `${Prefix}${SanitizeKey<Key, DoSanitize>}`;
 
 export type Matcher<
   Type,
+  KeyPath extends string,
   ExpectedType,
-  PreventDistribution = DefaultTypedotsParams['preventDistribution'],
-  ReturnType = Type & ExpectedType,
+  PreventDistribution extends boolean,
 > = PreventDistribution extends true
     ? [Type] extends [ExpectedType]
-      ? ReturnType
+      ? KeyPath
       : never
     : Type extends ExpectedType
-      ? ReturnType
+      ? KeyPath
       : never;
+
+
+/**
+ * @example ```ts
+ *  type Input = { one: { subone: { subonetwo: string; } } };
+ *
+ *  type OutputOne = AddProp<Input, 'one.subone.subonethree', number>;
+ *  declare const outputOne: OutputOne;
+ *  outputOne.one.subone.subonethree = 5;
+ *
+ *  type OutputTwo = AddProp<Input, 'two', string>;
+ *  declare const outputTwo: OutputTwo;
+ *  outputTwo.two = 'str';
+ * ```
+ */
+export type AddProp<
+  T extends AnyObject,
+  Path extends string,
+  TargetType,
+  Params extends PathParams<any, any> = Split<Path>
+> = T & Record<
+    Params['first'],
+    Params['rest'] extends undefined
+      ? TargetType
+      : T[Params['first']] extends AnyObject
+        ? Params['rest'] extends `(${infer A})`
+          ? T[Params['first']] & Record<A, TargetType>
+          : AddProp<T[Params['first']], Params['rest'], TargetType>
+        : Record<Params['rest'], TargetType>
+    >;
+
+export type Split<T extends string> = (
+  T extends `(${infer A}).${infer Rest}`
+  ? PathParams<A, Rest>
+  : T extends `${infer A}.${infer Rest}`
+    ? PathParams<A, Rest>
+    : PathParams<T, undefined>
+);

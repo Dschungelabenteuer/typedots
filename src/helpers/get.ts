@@ -3,7 +3,7 @@ import { parMatchRegexp, pathSplitRegexp } from './common';
 
 export const get: GetMethod = (object, path) => path
   .split(pathSplitRegexp).reduce(
-    (parent, current) => parent?.[current.replace(parMatchRegexp, '')],
+    (parent: any, current: any) => parent?.[current.replace(parMatchRegexp, '')],
     object,
   );
 
@@ -27,7 +27,9 @@ if (import.meta.vitest) {
     });
 
     it('should return undefined if it does not exist', () => {
+      // @ts-expect-error Strict mode should error the below line as the target path does not exist.
       expect(get(baseObject, 'it.does.not.exist')).toStrictEqual(undefined);
+      // @ts-expect-error Strict mode should error the below line as the target path does not exist.
       expect(get(baseObject, 'prop3.subprop1.inexisting')).toStrictEqual(undefined);
     });
   });

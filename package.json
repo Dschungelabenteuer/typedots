@@ -59,15 +59,15 @@
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.1",
-    "@rollup/plugin-replace": "^5.0.5",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@yungezeit/eslint-config-typescript": "^0.0.13",
-    "eslint": "^8.54.0",
-    "rollup": "^4.6.1",
-    "rollup-plugin-dts": "^6.1.0",
-    "tslib": "^2.6.2",
-    "typescript": "^5.3.2",
-    "vitest": "^0.34.6"
+    "@changesets/cli": "^2.27.12",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@yungezeit/eslint-typescript": "^0.0.12",
+    "eslint": "^8.57.1",
+    "rollup": "^4.34.1",
+    "rollup-plugin-dts": "^6.1.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
   }
 }

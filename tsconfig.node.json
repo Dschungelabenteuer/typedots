@@ -7,9 +7,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "noImplicitAny": true,
     "types": ["vitest/importMeta"],
   },
-  "include": ["src", "types"],
-  "references": [{ "path": "tsconfig.node.json" }],
+  "include": ["rollup.config.ts", "vitest.config.ts"]
 }
