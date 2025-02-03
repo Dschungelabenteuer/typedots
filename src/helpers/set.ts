@@ -1,12 +1,12 @@
 import type { ExtractObjectPaths } from '../types';
 import type { AddProp, AnyObject } from '../types/generic';
-import type { SetMethod, UpdateApplied } from '../types/set';
+import type { UpdateApplied } from '../types/set';
 import { parMatchRegexp, pathSplitRegexp } from './common';
 
 const helpers = {
   getSubpaths: <
-    Parent extends Parameters<SetMethod>[0],
-    Path extends Parameters<SetMethod>[1],
+    Parent extends Parameters<typeof set>[0],
+    Path extends Parameters<typeof set>[1],
   >(object: Parent, path: Path): {
     current: keyof typeof object;
     nested: string[];

@@ -1,6 +1,6 @@
 import type { GetMethod } from './get';
-import type { SetMethod } from './set';
 import type { HasMethod } from './has';
+import type { set } from '../helpers';
 
 export interface TypedotsParams {
   expectedType?: any;
@@ -15,7 +15,7 @@ export type DefaultTypedotsParams = TypedotsParams & {
 export class BaseTypedots<P extends TypedotsParams> {
   get: GetMethod<P>;
 
-  set: SetMethod<P>;
+  set: typeof set;
 
   has: HasMethod<P>;
 }

@@ -49,10 +49,10 @@
   "scripts": {
     "changeset": "changeset",
     "release": "pnpm build && changeset publish",
-    "build": "rollup --config rollup.config.ts --configPlugin typescript",
+    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "coverage": "vitest run --coverage",
     "check": "pnpm lint && pnpm test",
-    "lint": "eslint --ext .ts .",
+    "lint": "eslint src",
     "test": "vitest",
     "changeset:release": "pnpm build && changeset publish",
     "changeset:version": "changeset version && pnpm install --lockfile-only"
@@ -63,7 +63,7 @@
     "@rollup/plugin-replace": "^6.0.2",
     "@rollup/plugin-typescript": "^12.1.2",
     "@yungezeit/eslint-typescript": "^0.0.12",
-    "eslint": "^8.57.1",
+    "eslint": "^9.19.0",
     "rollup": "^4.34.1",
     "rollup-plugin-dts": "^6.1.1",
     "tslib": "^2.8.1",
