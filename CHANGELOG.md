@@ -1,5 +1,13 @@
 # typedots
 
+## 0.1.0
+
+### Minor Changes
+
+- fb6ca95: Fixed mutated object type when using `set`'s enabling `force` parameter
+- fb6ca95: `set` method's `force` parameter now defaults to `false`
+- fb6ca95: Strict mode is now enforced (breaking change)
+
 ## 0.0.4
 
 ### Patch Changes
