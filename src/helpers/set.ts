@@ -1,7 +1,9 @@
 import type { ExtractObjectPaths } from '../types';
-import type { AddProp, AnyObject } from '../types/generic';
-import type { UpdateApplied } from '../types/set';
+import type { AddProp, AnyObject, Prettify } from '../types/generic';
+
 import { parMatchRegexp, pathSplitRegexp } from './common';
+
+export type UpdateApplied = boolean;
 
 const helpers = {
   getSubpaths: <Parent extends Parameters<typeof set>[0], Path extends Parameters<typeof set>[1]>(
@@ -72,7 +74,8 @@ export const set = <
   object: BaseObject,
   path: Path,
   value: Value,
-  force?: Force
+  force?: Force,
+  throwErrors?: Force extends true ? false : boolean
 ): object is Force extends true
   ? Prettify<AddProp<BaseObject, Path, typeof value>>
   : BaseObject => {
@@ -80,15 +83,22 @@ export const set = <
   return helpers.updateDeep(object, current, nested, value, force);
 };
 
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {};
+export type UntypedSetMethod = (
+  object: Record<string, any>,
+  path: string,
+  value: any,
+  force?: boolean,
+  throwErrors?: boolean
+) => boolean;
+
+export const untypedSet = set as UntypedSetMethod;
 
 if (import.meta.vitest) {
   const { describe, it, expect, beforeEach } = import.meta.vitest;
   const { baseObject, variableName } = await import('../tests/mocks');
   const { get } = await import('./get');
   const { has } = await import('./has');
+
   describe('set', () => {
     let newValue: unknown;
     let objectCopy: typeof baseObject;

@@ -85,6 +85,11 @@ It is mainly used to get finer control over the way typedots' type system behave
       <td>Path you want to get the value from.<br />Possible values should be suggested by your IDE.</td>
     </tr>
     <tr>
+      <td>throwErrors</td>
+      <td><code>boolean</code></td>
+      <td>Whether to throw errors if the path does not resolve (defaults to <code>false</code>)</td>
+    </tr>
+    <tr>
       <th colspan="3">
         Return type
       </th>
@@ -97,6 +102,10 @@ It is mainly used to get finer control over the way typedots' type system behave
     </tr>
   </tbody>
 </table>
+
+##### Throw behaviour
+
+When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` whenever it encounters an unresolvable path instead of returning undefined. Unresolvable path
 
 ### `set`
 

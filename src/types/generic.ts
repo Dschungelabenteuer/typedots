@@ -62,3 +62,7 @@ type Split<T extends string> = T extends `(${infer A}).${infer Rest}`
   : T extends `${infer A}.${infer Rest}`
     ? PathParams<A, Rest>
     : PathParams<T, undefined>;
+
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};

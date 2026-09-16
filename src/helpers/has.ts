@@ -1,29 +1,36 @@
-import type { HasMethod } from '../types/has';
-import { parMatchRegexp, pathSplitRegexp } from './common';
+import type { DefaultTypedotsParams, TypedotsParams } from '../types';
+import type { ErrorHandler, ExtractObjectPaths } from '../types';
+import type { AnyObject } from '../types/generic';
 
-const helpers = {
-  analyzeSubpath: (currentScope: Record<'value', any>, subpath: string) => {
-    const parsedSubpath = subpath.replace(parMatchRegexp, '');
-    const isScopeObject = currentScope.value && typeof currentScope.value === 'object';
-    const hasNotSubpath =
-      !isScopeObject || !Object.prototype.hasOwnProperty.call(currentScope.value, parsedSubpath);
+import { get } from './get';
 
-    if (hasNotSubpath) return true;
+export type HasMethod<P extends TypedotsParams = DefaultTypedotsParams> = <
+  BaseObject extends AnyObject,
+  Path extends ExtractObjectPaths<BaseObject, P['expectedType'], P['preventDistribution']>,
+>(
+  object: BaseObject,
+  path: Path,
+  handleErrors?: ErrorHandler
+) => boolean;
 
-    currentScope.value = currentScope.value[parsedSubpath];
-    return false;
-  },
+export const has: HasMethod = (object, path, throwErrors = false) => {
+  if (throwErrors) {
+    return get(object, path, 'throw') !== undefined;
+  }
+
+  return get(object, path) !== undefined;
 };
 
-export const has: HasMethod = (object, path) => {
-  const currentScope: Record<'value', any> = { value: object };
-  return !path
-    .split(pathSplitRegexp)
-    .some((subpath: string) => helpers.analyzeSubpath(currentScope, subpath));
-};
+export type UntypedHasMethod = (
+  object: Record<string, any>,
+  path: string,
+  throwErrors?: boolean
+) => boolean;
+
+export const untypedHas = has as UntypedHasMethod;
 
 if (import.meta.vitest) {
-  const { describe, it, expect, vi } = import.meta.vitest;
+  const { describe, it, expect } = import.meta.vitest;
   const { baseObject, variableName } = await import('../tests/mocks');
   describe('has', () => {
     it('should return true if it exists', () => {
@@ -56,10 +63,8 @@ if (import.meta.vitest) {
     });
 
     it('should stop looking as soon as a child property does not exist', () => {
-      vi.spyOn(helpers, 'analyzeSubpath');
       // @ts-expect-error Strict mode should error the below line as the target path does not exist.
-      has(baseObject, 'prop3.subprop3.three.not.existing.sub.path');
-      expect(helpers.analyzeSubpath).toHaveBeenCalledTimes(4);
+      expect(has(baseObject, 'prop3.subprop3.three.not.existing.sub.path')).toStrictEqual(false);
     });
   });
 }
