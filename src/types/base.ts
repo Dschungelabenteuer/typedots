@@ -12,7 +12,7 @@ export type DefaultTypedotsParams = TypedotsParams & {
   preventDistribution: false;
 };
 
-export class BaseTypedots<P extends TypedotsParams> {
+export interface BaseTypedots<P extends TypedotsParams> {
   get: GetMethod<P>;
 
   set: typeof set;

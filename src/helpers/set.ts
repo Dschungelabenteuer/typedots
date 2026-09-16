@@ -4,14 +4,12 @@ import type { UpdateApplied } from '../types/set';
 import { parMatchRegexp, pathSplitRegexp } from './common';
 
 const helpers = {
-  getSubpaths: <
-    Parent extends Parameters<typeof set>[0],
-    Path extends Parameters<typeof set>[1],
-  >(object: Parent, path: Path): {
-    current: keyof typeof object;
-    nested: string[];
-  } => {
-    const [current, ...nested] = path.split(pathSplitRegexp)
+  getSubpaths: <Parent extends Parameters<typeof set>[0], Path extends Parameters<typeof set>[1]>(
+    object: Parent,
+    path: Path
+  ): { current: keyof typeof object; nested: string[] } => {
+    const [current, ...nested] = path
+      .split(pathSplitRegexp)
       .map((subpath: string) => subpath.replace(parMatchRegexp, ''));
     return { current, nested };
   },
@@ -21,12 +19,18 @@ const helpers = {
     Path extends keyof Parent,
     Rest extends string[],
     Value,
-  >(parent: Parent, path: Path, rest: Rest, value: Value & any, force = false): UpdateApplied => {
+  >(
+    parent: Parent,
+    path: Path,
+    rest: Rest,
+    value: Value & any,
+    force = false
+  ): UpdateApplied => {
     const nestedProp = rest.shift();
     const hasPathProperty = Object.prototype.hasOwnProperty.call(parent, path);
     const hasPathObject = hasPathProperty && typeof parent[path] === 'object';
-    const hasPathObjectSubPath = hasPathObject
-      && Object.prototype.hasOwnProperty.call(parent[path], nestedProp);
+    const hasPathObjectSubPath =
+      nestedProp && hasPathObject && Object.prototype.hasOwnProperty.call(parent[path], nestedProp);
 
     if (!nestedProp && (hasPathProperty || force)) {
       parent[path] = value;
@@ -53,28 +57,22 @@ const helpers = {
       parent[path] = {} as any;
     }
 
-    return helpers.updateDeep(
-      parent[path],
-      nestedProp,
-      rest,
-      value,
-      force,
-    );
+    return helpers.updateDeep(parent[path], nestedProp, rest, value, force);
   },
 };
 
 export const set = <
   BaseObject extends AnyObject,
-  Path extends Force extends true
+  Path extends (Force extends true
     ? ExtractObjectPaths<BaseObject, any, true> | string
-    : ExtractObjectPaths<BaseObject, any, true>,
+    : ExtractObjectPaths<BaseObject, any, true>),
   Value,
   Force extends boolean = false,
-  >(
-    object: BaseObject,
-    path:  Path,
-    value: Value,
-    force?: Force
+>(
+  object: BaseObject,
+  path: Path,
+  value: Value,
+  force?: Force
 ): object is Force extends true
   ? Prettify<AddProp<BaseObject, Path, typeof value>>
   : BaseObject => {
@@ -86,10 +84,9 @@ type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-
 if (import.meta.vitest) {
   const { describe, it, expect, beforeEach } = import.meta.vitest;
-  const { baseObject, variableName } = await import('../mocks');
+  const { baseObject, variableName } = await import('../tests/mocks');
   const { get } = await import('./get');
   const { has } = await import('./has');
   describe('set', () => {
@@ -121,7 +118,7 @@ if (import.meta.vitest) {
         newValue = false;
         if (set(objectCopy, 'anothernonexistant', newValue as boolean, true)) {
           expect(get(objectCopy, 'anothernonexistant')).toStrictEqual(newValue);
-        };
+        }
       });
     });
 
@@ -146,7 +143,7 @@ if (import.meta.vitest) {
         newValue = 'newValue';
         if (set(objectCopy, 'prop3.nonexistant', newValue, true)) {
           expect(get(objectCopy, 'prop3.nonexistant')).toStrictEqual(newValue);
-        };
+        }
       });
 
       it('should not update if digging existing non-object root property when `force = false`', () => {
@@ -164,7 +161,7 @@ if (import.meta.vitest) {
           // objectCopy.prop1.edited = 'plop2';
           // @ts-expect-error investigate better type transform even though this case isn't recommended.
           expect(get(objectCopy, 'prop1.edited')).toStrictEqual(newValue);
-        };
+        }
       });
     });
 
@@ -187,7 +184,7 @@ if (import.meta.vitest) {
 
       it('should create non-existing nested property when `force = true`', () => {
         newValue = 'newValue';
-        if(set(objectCopy, 'prop3.subprop3.nonexistant', newValue as string, true)) {
+        if (set(objectCopy, 'prop3.subprop3.nonexistant', newValue as string, true)) {
           expect(get(objectCopy, 'prop3.subprop3.nonexistant')).toStrictEqual(newValue);
         }
       });

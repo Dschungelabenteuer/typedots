@@ -1,0 +1,27 @@
+name: Setup CI
+description: Setup CI
+
+inputs:
+  skip-cache:
+    description: 'Whether to skip the cache'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Check out repo
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Install pnpm and Node.js
+      uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2.0.2
+      with:
+        runtime: node@24
+        cache: true
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

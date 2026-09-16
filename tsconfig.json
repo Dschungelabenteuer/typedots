@@ -2,13 +2,13 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
-    "types": ["vitest/importMeta"],
+    "types": ["vitest/importMeta"]
   },
   "include": ["src", "types", "rollup.config.ts"],
-  "references": [{ "path": "tsconfig.node.json" }],
+  "references": [{ "path": "tsconfig.node.json" }]
 }

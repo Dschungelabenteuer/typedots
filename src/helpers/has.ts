@@ -5,8 +5,8 @@ const helpers = {
   analyzeSubpath: (currentScope: Record<'value', any>, subpath: string) => {
     const parsedSubpath = subpath.replace(parMatchRegexp, '');
     const isScopeObject = currentScope.value && typeof currentScope.value === 'object';
-    const hasNotSubpath = !isScopeObject
-      || !Object.prototype.hasOwnProperty.call(currentScope.value, parsedSubpath);
+    const hasNotSubpath =
+      !isScopeObject || !Object.prototype.hasOwnProperty.call(currentScope.value, parsedSubpath);
 
     if (hasNotSubpath) return true;
 
@@ -24,7 +24,7 @@ export const has: HasMethod = (object, path) => {
 
 if (import.meta.vitest) {
   const { describe, it, expect, vi } = import.meta.vitest;
-  const { baseObject, variableName } = await import('../mocks');
+  const { baseObject, variableName } = await import('../tests/mocks');
   describe('has', () => {
     it('should return true if it exists', () => {
       expect(has(baseObject, 'prop1')).toStrictEqual(true);

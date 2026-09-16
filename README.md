@@ -41,7 +41,7 @@ There are two ways of consuming typedots depending on your needs and preferences
 ### Directly use base methods
 
 ```ts
-import { get, set, has } from "typedots";
+import { get, set, has } from 'typedots';
 ```
 
 ### Advanced use through class
@@ -49,7 +49,7 @@ import { get, set, has } from "typedots";
 The class implements the exact same base methods.
 
 ```ts
-import Typedots from "typedots";
+import Typedots from 'typedots';
 
 const td = new Typedots(); // td.get, td.set, td.has
 ```
@@ -216,7 +216,7 @@ You may want to add some constraints to the list of suggested paths. To achieve 
 
 ```ts
 const obj = {
-  myProperty: "value of my property",
+  myProperty: 'value of my property',
   myMethod: (message) => `received ${message}`,
   helpers: {
     maxLength: 255,
@@ -227,7 +227,7 @@ const obj = {
 };
 
 const typedots = new Typedots<{ expectedType: (...args: any) => any }>();
-const method = typedots.get(obj, ""); // <-- should only suggest "myMethod" and "helpers.count"
+const method = typedots.get(obj, ''); // <-- should only suggest "myMethod" and "helpers.count"
 ```
 
 Please note that typedots relies on TypeScript's own type inference mechanism. This means its behaviour may be influenced by TypeScript's configuration.
@@ -239,12 +239,12 @@ For example, [`strictNullChecks`](https://www.typescriptlang.org/tsconfig#strict
 ```ts
 /** > When `strictNullChecks: false`: */
 // infered as { prop, string un: any }
-const obj = { prop: "some string", un: undefined };
+const obj = { prop: 'some string', un: undefined };
 new Typedots<{ expectedType: string }>(); // suggests "prop" | "un"
 
 /** > When `strictNullChecks: true`: */
 // infered as { prop: string, un: undefined }
-const obj = { prop: "some string", un: undefined };
+const obj = { prop: 'some string', un: undefined };
 new Typedots<{ expectedType: string }>(); // suggests "prop"
 ```
 
@@ -285,38 +285,57 @@ The type which powers the suggestion system is exported as `ExtractObjectPaths`,
 ## Examples
 
 ```ts
-import { get, set, has } from "typedots";
+import { get, set, has } from 'typedots';
 
-const variableName = "content";
+const variableName = 'content';
 const baseObject = {
-  prop1: true,
-  prop2: false,
-  prop3: {
-    subprop1: "string",
-    subprop2: ["first", 2_000, { third: undefined }],
+  'prop1': true,
+  'prop2': false,
+  'prop3': {
+    subprop1: 'string',
+    subprop2: ['first', 2_000, { third: undefined }],
     subprop3: { one: true, two: true, three: false },
     subprop4: undefined,
   },
   [variableName]: {},
-  "prop.5": { nested: "string", "another.sub.prop": {} },
+  'prop.5': { 'nested': 'string', 'another.sub.prop': {} },
 };
 
-get(baseObject, "prop1"); // true
-get(baseObject, "prop3.subprop1"); // "string"
-get(baseObject, "prop3.subprop3.three"); // false
-get(baseObject, "(prop.5).nested"); // 'string'
-get(baseObject, "content"); // {}
+get(baseObject, 'prop1'); // true
+get(baseObject, 'prop3.subprop1'); // "string"
+get(baseObject, 'prop3.subprop3.three'); // false
+get(baseObject, '(prop.5).nested'); // 'string'
+get(baseObject, 'content'); // {}
 get(baseObject, variableName); // {}
 
-set(baseObject, "prop1", value); // true
-set(baseObject, "prop100", value, false); // false
-set(baseObject, "prop100", value); // true
-set(baseObject, "prop2.child", value, false); // false
-set(baseObject, "prop2.child", value); // true
+set(baseObject, 'prop1', value); // true
+set(baseObject, 'prop100', value, false); // false
+set(baseObject, 'prop100', value); // true
+set(baseObject, 'prop2.child', value, false); // false
+set(baseObject, 'prop2.child', value); // true
 
-has(baseObject, "prop1"); // true
-has(baseObject, "prop3.NOOP"); // false
-has(baseObject, "NOPE"); // false
-has(baseObject, "prop3.subprop4"); // true
-has(baseObject, "(prop.5).(another.sub.prop)"); // true
+has(baseObject, 'prop1'); // true
+has(baseObject, 'prop3.NOOP'); // false
+has(baseObject, 'NOPE'); // false
+has(baseObject, 'prop3.subprop4'); // true
+has(baseObject, '(prop.5).(another.sub.prop)'); // true
+```
+
+## Untypedots
+
+You may want to benefit from the runtime methods provided by Typedots without enforcing type safety. This can be useful in scenarios where you are dealing with dynamic objects or or encountering the following error:
+
+> Type instantiation is excessively deep and possibly infinite.
+
+This usually happens when passing `any` which makes it impossible for TypeScript to infer any type and for Typedots to provide any type suggestions. Typedots does not handle this _on purpose_ because it could silence relevant type errors that you would otherwise want to be aware of, which would defeat one of the core purposes of this library.
+
+It shares the same API as the regular `Typedots` class, but doesn't take any type parameters.
+
+```ts
+import { Untypedots } from 'typedots';
+
+new Untypedots();
+// .has(…)
+// .get(…)
+// .set(…)
 ```

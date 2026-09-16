@@ -1,15 +1,14 @@
 import type { GetMethod } from '../types/get';
 import { parMatchRegexp, pathSplitRegexp } from './common';
 
-export const get: GetMethod = (object, path) => path
-  .split(pathSplitRegexp).reduce(
-    (parent: any, current: any) => parent?.[current.replace(parMatchRegexp, '')],
-    object,
-  );
+export const get: GetMethod = (object, path) =>
+  path
+    .split(pathSplitRegexp)
+    .reduce((parent: any, current: any) => parent?.[current.replace(parMatchRegexp, '')], object);
 
 if (import.meta.vitest) {
   const { describe, it, expect } = import.meta.vitest;
-  const { baseObject, variableName } = await import('../mocks');
+  const { baseObject, variableName } = await import('../tests/mocks');
   describe('get', () => {
     it('should return correct value', () => {
       expect(get(baseObject, 'prop1')).toStrictEqual(true);

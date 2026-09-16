@@ -4,4 +4,7 @@ import type { AnyObject } from './generic';
 export type HasMethod<P extends TypedotsParams = DefaultTypedotsParams> = <
   BaseObject extends AnyObject,
   Path extends ExtractObjectPaths<BaseObject, P['expectedType'], P['preventDistribution']>,
->(object: BaseObject, path: Path) => boolean;
+>(
+  object: BaseObject,
+  path: Path
+) => boolean;

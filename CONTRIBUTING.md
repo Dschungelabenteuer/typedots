@@ -40,7 +40,7 @@ pnpm -v
 
 This project also uses:
 
-- [ESLint](https://eslint.org/docs/latest/use/getting-started) as a linter
+- [Oxlint](https://oxc.rs/docs/guide/usage/linter) as a linter
 - [Vitest](https://vitest.dev) as a test framework
 
 It is recommended (but optional) to plug these tools into your IDE by using their respective
