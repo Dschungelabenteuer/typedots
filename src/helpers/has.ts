@@ -100,4 +100,11 @@ if (import.meta.vitest) {
       expect(has(baseObject, 'prop3.subprop4')).toStrictEqual(true);
     });
   });
+
+  describe('untyped', () => {
+    it('should not have "Type instantiation is excessively deep and possibly infinite."', () => {
+      const untypedObject = {} as any;
+      untypedHas(untypedObject, 'any.path');
+    });
+  });
 }

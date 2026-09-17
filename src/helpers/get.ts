@@ -23,7 +23,7 @@ export const get: GetMethod = (object, path, handleErrors: ErrorHandler = false)
     return source?.[parsedSubpath];
   }, object);
 
-type UntypedGetMethod = (
+export type UntypedGetMethod = (
   object: Record<string, any>,
   path: string,
   handleErrors?: ErrorHandler
@@ -102,6 +102,13 @@ if (import.meta.vitest) {
             );
           });
         }
+      });
+    });
+
+    describe('untyped', () => {
+      it('should not have "Type instantiation is excessively deep and possibly infinite."', () => {
+        const untypedObject = {} as any;
+        untypedGet(untypedObject, 'any.path');
       });
     });
   });

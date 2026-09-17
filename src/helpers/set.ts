@@ -337,4 +337,11 @@ if (import.meta.vitest) {
       });
     });
   });
+
+  describe('untyped', () => {
+    it('should not have "Type instantiation is excessively deep and possibly infinite."', () => {
+      const untypedObject = {} as any;
+      untypedSet(untypedObject, 'any.path', 'anyValue');
+    });
+  });
 }
