@@ -1,5 +1,11 @@
 # typedots
 
+## 0.3.0
+
+### Minor Changes
+
+- [`9c008d8`](https://github.com/Dschungelabenteuer/typedots/commit/9c008d853e0c133091d0d801c21f4c550f0c3aee) Thanks [@Dschungelabenteuer](https://github.com/Dschungelabenteuer)! - Dropped CJS support and fixed package exports fields
+
 ## 0.2.0
 
 ### Minor Changes
