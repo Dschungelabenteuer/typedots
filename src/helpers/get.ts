@@ -23,7 +23,11 @@ export const get: GetMethod = (object, path, handleErrors: ErrorHandler = false)
     return source?.[parsedSubpath];
   }, object);
 
-type UntypedGetMethod = (object: Record<string, any>, path: string, throwErrors?: boolean) => any;
+type UntypedGetMethod = (
+  object: Record<string, any>,
+  path: string,
+  handleErrors?: ErrorHandler
+) => any;
 export const untypedGet = get as UntypedGetMethod;
 
 if (import.meta.vitest) {
@@ -73,7 +77,7 @@ if (import.meta.vitest) {
           expectedErrorSubpath: 'inexisting',
         },
         {
-          title: 'Using a property that resolved to undefined',
+          title: 'Using a property that resolves to undefined',
           path: 'prop3.subprop4',
           expectedError: UndefinedPropertyError,
           expectedErrorCurrentPath: 'prop3.subprop4',

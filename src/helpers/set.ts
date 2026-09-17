@@ -1,7 +1,14 @@
-import type { ExtractObjectPaths } from '../types';
+import type { ErrorHandler, ExtractObjectPaths } from '../types';
 import type { AddProp, AnyObject, Prettify } from '../types/generic';
 
-import { parMatchRegexp, pathSplitRegexp } from './common';
+import {
+  handleError,
+  hasDefinedProperty,
+  isObject,
+  parMatchRegexp,
+  pathSplitRegexp,
+} from './common';
+import { SourceNotAnObjectError, UndefinedPropertyError } from './errors';
 
 export type UpdateApplied = boolean;
 
@@ -18,7 +25,7 @@ const helpers = {
 
   updateDeep: <
     Parent extends Record<string, any>,
-    Path extends keyof Parent,
+    Path extends keyof Parent & string,
     Rest extends string[],
     Value,
   >(
@@ -26,13 +33,23 @@ const helpers = {
     path: Path,
     rest: Rest,
     value: Value & any,
-    force = false
+    force = false,
+    handleErrors?: ErrorHandler
   ): UpdateApplied => {
     const nestedProp = rest.shift();
-    const hasPathProperty = Object.prototype.hasOwnProperty.call(parent, path);
+    if (!isObject(parent) && handleErrors)
+      handleError(new SourceNotAnObjectError(payload), handleErrors);
+
+    const hasPathProperty = hasDefinedProperty(parent, path);
+    if (!hasPathProperty && nestedProp && handleErrors)
+      handleError(new UndefinedPropertyError(payload), handleErrors);
+
     const hasPathObject = hasPathProperty && typeof parent[path] === 'object';
+    if (!hasPathObject && nestedProp && handleErrors)
+      handleError(new SourceNotAnObjectError(payload), handleErrors);
+
     const hasPathObjectSubPath =
-      nestedProp && hasPathObject && Object.prototype.hasOwnProperty.call(parent[path], nestedProp);
+      nestedProp && hasPathObject && hasDefinedProperty(parent[path], nestedProp);
 
     if (!nestedProp && (hasPathProperty || force)) {
       parent[path] = value;
@@ -75,12 +92,23 @@ export const set = <
   path: Path,
   value: Value,
   force?: Force,
-  throwErrors?: Force extends true ? false : boolean
+  handleErrors?: ErrorHandler
 ): object is Force extends true
   ? Prettify<AddProp<BaseObject, Path, typeof value>>
   : BaseObject => {
   const { current, nested } = helpers.getSubpaths(object, path);
-  return helpers.updateDeep(object, current, nested, value, force);
+  if (!isObject(object) && handleErrors) {
+    handleError(new SourceNotAnObjectError(payload), handleErrors);
+    return false;
+  }
+
+  if (!hasDefinedProperty(object, current) && handleErrors) {
+    handleError(new UndefinedPropertyError(payload), handleErrors);
+    return false;
+  }
+
+  // pass directly object[current] instead
+  return helpers.updateDeep(object, current, nested, value, force, handleErrors);
 };
 
 export type UntypedSetMethod = (
@@ -255,3 +283,7 @@ if (import.meta.vitest) {
     });
   });
 }
+
+// @todo resolve
+// @todo Always raise error when handleErrors, apart from when creating new nested properties ON A PATH THAT IS AN OBJECT with `force = true`
+// if path is not an object, it should error
