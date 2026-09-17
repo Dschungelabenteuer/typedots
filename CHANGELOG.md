@@ -1,5 +1,11 @@
 # typedots
 
+## 0.3.1
+
+### Patch Changes
+
+- [`4fb79a9`](https://github.com/Dschungelabenteuer/typedots/commit/4fb79a9bc38ab25f9fdc756b973d270e99a4af42) Thanks [@Dschungelabenteuer](https://github.com/Dschungelabenteuer)! - Fixed missing code elimination
+
 ## 0.3.0
 
 ### Minor Changes
