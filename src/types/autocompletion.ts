@@ -1,19 +1,24 @@
 import type { DefaultTypedotsParams } from '.';
-import type { baseObject } from '../mocks';
+import type { baseObject } from '../tests/mocks';
 import type { AcceptNullable, AnyObject, Join, Matcher } from './generic';
 
 type ObjectPaths<
   T,
   ExpectedType,
   PreventDistribution extends boolean,
-  Prefix extends string = ""
+  Prefix extends string = '',
 > = T extends never
   ? never
   : {
-    [K in keyof T & string]: AcceptNullable<T[K]> extends AnyObject
+      [K in keyof T & string]: AcceptNullable<T[K]> extends AnyObject
         ?
-          | Matcher<T[K], Join<Prefix, K>, ExpectedType, PreventDistribution>
-          | ObjectPaths<AcceptNullable<T[K]>, ExpectedType, PreventDistribution, `${Join<Prefix, K>}.`>
+            | Matcher<T[K], Join<Prefix, K>, ExpectedType, PreventDistribution>
+            | ObjectPaths<
+                AcceptNullable<T[K]>,
+                ExpectedType,
+                PreventDistribution,
+                `${Join<Prefix, K>}.`
+              >
         : Matcher<T[K], Join<Prefix, K>, ExpectedType, PreventDistribution>;
     }[keyof T & string];
 
@@ -91,7 +96,7 @@ if (import.meta.vitest) {
           prop5: string | null;
           prop6: string | undefined;
           prop7: string | null | undefined;
-        }
+        };
       }>;
 
       assertType<TestedType>('parent');
@@ -106,10 +111,7 @@ if (import.meta.vitest) {
 
     it('should work with variable property names', () => {
       const variableName = 'prop2';
-      type TestedType = ExtractObjectPaths<{
-        'prop1': string;
-        [variableName]: string;
-      }>;
+      type TestedType = ExtractObjectPaths<{ prop1: string; [variableName]: string }>;
       assertType<TestedType>('prop1');
       assertType<TestedType>('prop2');
     });
@@ -117,7 +119,7 @@ if (import.meta.vitest) {
     it('should wrap properties containing a dot', () => {
       type TestedType = ExtractObjectPaths<{
         'prop.1': string;
-        prop2: { 'prop2.child': string };
+        'prop2': { 'prop2.child': string };
       }>;
       assertType<TestedType>('(prop.1)');
       assertType<TestedType>('prop2');
@@ -126,12 +128,9 @@ if (import.meta.vitest) {
 
     it('should handle `expectedType` correctly', () => {
       interface BaseTestedType {
-        myProperty: "value of my property",
-        myMethod: (message: string) => string,
-        helpers: {
-          maxLength: 255,
-          count(item: unknown[]): number,
-        },
+        myProperty: 'value of my property';
+        myMethod: (message: string) => string;
+        helpers: { maxLength: 255; count(item: unknown[]): number };
       }
       type TestedFnType = ExtractObjectPaths<BaseTestedType, (args: any) => any>;
       type TestedStringType = ExtractObjectPaths<BaseTestedType, string>;
@@ -144,7 +143,11 @@ if (import.meta.vitest) {
     });
 
     it('should handle `preventDistribution` correctly', () => {
-      interface BaseTestedType { one: false, two: true, three: boolean }
+      interface BaseTestedType {
+        one: false;
+        two: true;
+        three: boolean;
+      }
 
       type TestedTrueType = ExtractObjectPaths<BaseTestedType, true>;
       // This matches because of boolean distribution.
@@ -154,7 +157,6 @@ if (import.meta.vitest) {
       // @ts-expect-error This should not match!
       assertType<TestedTrueType>('one');
 
-
       type TestedUndistributedTrueType = ExtractObjectPaths<BaseTestedType, true, true>;
       // @ts-expect-error This should not match because boolean distribution is prevented!
       assertType<TestedUndistributedTrueType>('three');
@@ -163,9 +165,8 @@ if (import.meta.vitest) {
       // @ts-expect-error This should not match!
       assertType<TestedTrueDType>('one');
 
-
       type TestedFalseType = ExtractObjectPaths<BaseTestedType, false>;
-       // This matches because of boolean distribution.
+      // This matches because of boolean distribution.
       assertType<TestedFalseType>('three');
       // This matches because it is explicitly `false`.
       assertType<TestedFalseType>('one');
@@ -174,11 +175,11 @@ if (import.meta.vitest) {
 
       type TestedUndistributedFalseType = ExtractObjectPaths<BaseTestedType, false, true>;
       // @ts-expect-error This should not match because boolean distribution is prevented!
-     assertType<TestedUndistributedFalseType>('three');
-     // This matches because it is explicitly `false`.
-     assertType<TestedUndistributedFalseType>('one');
-     // @ts-expect-error This should not match!
-     assertType<TestedUndistributedFalseType>('two');
+      assertType<TestedUndistributedFalseType>('three');
+      // This matches because it is explicitly `false`.
+      assertType<TestedUndistributedFalseType>('one');
+      // @ts-expect-error This should not match!
+      assertType<TestedUndistributedFalseType>('two');
     });
   });
 }

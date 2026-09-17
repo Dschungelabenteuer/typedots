@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+    branches:
+      - main
+
+permissions:
+  contents: read # required for actions/checkout
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  lint-workflows:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # required for actions/checkout
+      actions: read # only required in private repos
+      security-events: write # allow writing security events
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
+        with:
+          persona: pedantic
+          annotations: true
+          advanced-security: false
+
+  test:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: $/.github/actions/ci-setup
+
+      - name: Test
+        run: pnpm test
+
+  typecheck:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: $/.github/actions/ci-setup
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  lint:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: $/.github/actions/ci-setup
+
+      - name: Format
+        run: pnpm format
+
+      - name: Lint
+        run: pnpm lint
+
+  ci-ok:
+    name: CI OK
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [lint-workflows, test, typecheck, lint]
+    steps:
+      - name: Exit with error if some jobs are not successful
+        run: exit 1
+        if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}

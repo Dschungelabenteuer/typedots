@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["oxc", "typescript", "unicorn", "import", "promise", "vue"],
+  "options": { "typeAware": true, "typeCheck": true },
+  "categories": { "correctness": "warn" },
+  "rules": {
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports" }],
+    "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+    "typescript/no-redundant-type-constituents": "off",
+    "no-console": ["error", { "allow": ["info", "warn", "error", "profile", "profileEnd"] }]
+  }
+}

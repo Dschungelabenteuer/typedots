@@ -1,30 +1,45 @@
-import type { HasMethod } from '../types/has';
-import { parMatchRegexp, pathSplitRegexp } from './common';
+import { expectToThrow } from '../tests/expects';
+import type { InvalidPathError } from './errors';
+import type { DefaultTypedotsParams, TypedotsParams } from '../types';
+import type { ErrorHandler, ExtractObjectPaths } from '../types';
+import type { AnyObject } from '../types/generic';
+import { handleError } from './common';
+import { UndefinedPropertyError } from './errors';
 
-const helpers = {
-  analyzeSubpath: (currentScope: Record<'value', any>, subpath: string) => {
-    const parsedSubpath = subpath.replace(parMatchRegexp, '');
-    const isScopeObject = currentScope.value && typeof currentScope.value === 'object';
-    const hasNotSubpath = !isScopeObject
-      || !Object.prototype.hasOwnProperty.call(currentScope.value, parsedSubpath);
+import { get } from './get';
 
-    if (hasNotSubpath) return true;
+export type HasMethod<P extends TypedotsParams = DefaultTypedotsParams> = <
+  BaseObject extends AnyObject,
+  Path extends ExtractObjectPaths<BaseObject, P['expectedType'], P['preventDistribution']>,
+>(
+  object: BaseObject,
+  path: Path,
+  handleErrors?: ErrorHandler
+) => boolean;
 
-    currentScope.value = currentScope.value[parsedSubpath];
+export const has: HasMethod = (object, path, handleErrors = false) => {
+  try {
+    get(object, path, 'throw');
+  } catch (e) {
+    if (handleErrors) handleError(e as InvalidPathError, handleErrors);
     return false;
-  },
+  }
+
+  return true;
 };
 
-export const has: HasMethod = (object, path) => {
-  const currentScope: Record<'value', any> = { value: object };
-  return !path
-    .split(pathSplitRegexp)
-    .some((subpath: string) => helpers.analyzeSubpath(currentScope, subpath));
-};
+export type UntypedHasMethod = (
+  object: Record<string, any>,
+  path: string,
+  handleErrors?: ErrorHandler
+) => boolean;
+
+export const untypedHas = has as UntypedHasMethod;
 
 if (import.meta.vitest) {
-  const { describe, it, expect, vi } = import.meta.vitest;
-  const { baseObject, variableName } = await import('../mocks');
+  const { describe, it, expect } = import.meta.vitest;
+  const { baseObject, variableName } = await import('../tests/mocks');
+
   describe('has', () => {
     it('should return true if it exists', () => {
       expect(has(baseObject, 'prop1')).toStrictEqual(true);
@@ -56,10 +71,40 @@ if (import.meta.vitest) {
     });
 
     it('should stop looking as soon as a child property does not exist', () => {
-      vi.spyOn(helpers, 'analyzeSubpath');
       // @ts-expect-error Strict mode should error the below line as the target path does not exist.
-      has(baseObject, 'prop3.subprop3.three.not.existing.sub.path');
-      expect(helpers.analyzeSubpath).toHaveBeenCalledTimes(4);
+      expect(has(baseObject, 'prop3.subprop3.three.not.existing.sub.path')).toStrictEqual(false);
+    });
+
+    it('should throw an error if throwErrors is true and the path does not exist', () => {
+      expectToThrow(
+        // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+        () => has(baseObject, 'it.does.not.exist', 'throw'),
+        UndefinedPropertyError,
+        '<root>',
+        'it'
+      );
+    });
+
+    it('should throw an error if throwErrors is true and a non-existing nested path is accessed', () => {
+      expectToThrow(
+        // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+        () => has(baseObject, 'prop3.subprop3.inexisting', 'throw'),
+        UndefinedPropertyError,
+        'prop3.subprop3',
+        'inexisting'
+      );
+    });
+
+    it('should return true when using a property that resolves to undefined', () => {
+      expect(has(baseObject, 'prop3.subprop4')).not.toThrow(true);
+      expect(has(baseObject, 'prop3.subprop4')).toStrictEqual(true);
+    });
+  });
+
+  describe('untyped', () => {
+    it('should not have "Type instantiation is excessively deep and possibly infinite."', () => {
+      const untypedObject = {} as any;
+      untypedHas(untypedObject, 'any.path');
     });
   });
 }

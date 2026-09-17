@@ -1,103 +1,145 @@
-import type { ExtractObjectPaths } from '../types';
-import type { AddProp, AnyObject } from '../types/generic';
-import type { UpdateApplied } from '../types/set';
-import { parMatchRegexp, pathSplitRegexp } from './common';
+import type { ErrorHandler, ExtractObjectPaths } from '../types';
+import type { AddProp, AnyObject, Prettify } from '../types/generic';
+
+import {
+  handleError,
+  hasDefinedProperty,
+  isObject,
+  parMatchRegexp,
+  pathSplitRegexp,
+  Payload,
+} from './common';
+import { SourceNotAnObjectError, UndefinedPropertyError } from './errors';
+
+export type UpdateApplied = boolean;
 
 const helpers = {
-  getSubpaths: <
-    Parent extends Parameters<typeof set>[0],
-    Path extends Parameters<typeof set>[1],
-  >(object: Parent, path: Path): {
-    current: keyof typeof object;
-    nested: string[];
-  } => {
-    const [current, ...nested] = path.split(pathSplitRegexp)
+  getSubpaths: <Parent extends Parameters<typeof set>[0], Path extends Parameters<typeof set>[1]>(
+    object: Parent,
+    path: Path
+  ): { current: keyof typeof object & string; nested: string[] } => {
+    const [current, ...nested] = path
+      .split(pathSplitRegexp)
       .map((subpath: string) => subpath.replace(parMatchRegexp, ''));
     return { current, nested };
   },
 
-  updateDeep: <
-    Parent extends Record<string, any>,
-    Path extends keyof Parent,
-    Rest extends string[],
-    Value,
-  >(parent: Parent, path: Path, rest: Rest, value: Value & any, force = false): UpdateApplied => {
-    const nestedProp = rest.shift();
-    const hasPathProperty = Object.prototype.hasOwnProperty.call(parent, path);
-    const hasPathObject = hasPathProperty && typeof parent[path] === 'object';
-    const hasPathObjectSubPath = hasPathObject
-      && Object.prototype.hasOwnProperty.call(parent[path], nestedProp);
+  updateDeep: <Source extends Record<string, any>, Subpaths extends string[], Value>(
+    source: Source,
+    subpaths: Subpaths,
+    value: Value & any,
+    force = false,
+    handleErrors: ErrorHandler = false,
+    fullPath: string,
+    index = 0
+  ): UpdateApplied => {
+    const [current, ...rest] = subpaths;
+    if (!current) return false;
 
-    if (!nestedProp && (hasPathProperty || force)) {
-      parent[path] = value;
-      return true;
-    }
+    const payload = new Payload(fullPath, index, source, current);
 
-    if (!nestedProp) return false;
-
-    if (!rest.length) {
-      if (hasPathObjectSubPath) {
-        parent[path] = { ...parent[path], [nestedProp]: value };
-        return true;
-      }
-
-      if (!hasPathObjectSubPath && force) {
-        parent[path] = { [nestedProp]: value } as any;
-        return true;
-      }
-
+    if (!isObject(source)) {
+      if (handleErrors) handleError(new SourceNotAnObjectError(payload), handleErrors);
       return false;
     }
 
-    if (!hasPathObject && force) {
-      parent[path] = {} as any;
+    const hasCurrent = hasDefinedProperty(source, current);
+    const hasNested = rest.length > 0;
+
+    if (!hasNested) {
+      if (!hasCurrent && !force) {
+        if (handleErrors) handleError(new UndefinedPropertyError(payload), handleErrors);
+        return false;
+      }
+
+      (source as any)[current] = value;
+      return true;
+    }
+
+    if (!hasCurrent) {
+      if (!force) {
+        if (handleErrors) handleError(new UndefinedPropertyError(payload), handleErrors);
+        return false;
+      }
+
+      (source as any)[current] = {} as Record<string, any>;
+    }
+
+    if (!isObject(source[current])) {
+      if (handleErrors) {
+        const nestedPayload = new Payload(fullPath, index + 1, source[current], rest[0] ?? current);
+        handleError(new SourceNotAnObjectError(nestedPayload), handleErrors);
+      }
+      return false;
     }
 
     return helpers.updateDeep(
-      parent[path],
-      nestedProp,
-      rest,
+      source[current],
+      rest as string[],
       value,
       force,
+      handleErrors,
+      fullPath,
+      index + 1
     );
   },
 };
 
 export const set = <
   BaseObject extends AnyObject,
-  Path extends Force extends true
+  Path extends (Force extends true
     ? ExtractObjectPaths<BaseObject, any, true> | string
-    : ExtractObjectPaths<BaseObject, any, true>,
+    : ExtractObjectPaths<BaseObject, any, true>),
   Value,
   Force extends boolean = false,
-  >(
-    object: BaseObject,
-    path:  Path,
-    value: Value,
-    force?: Force
+>(
+  object: BaseObject,
+  path: Path,
+  value: Value,
+  force?: Force,
+  handleErrors?: ErrorHandler
 ): object is Force extends true
   ? Prettify<AddProp<BaseObject, Path, typeof value>>
   : BaseObject => {
   const { current, nested } = helpers.getSubpaths(object, path);
-  return helpers.updateDeep(object, current, nested, value, force);
+  if (!isObject(object) && handleErrors) {
+    const payload = new Payload(path, 0, object, current);
+    handleError(new SourceNotAnObjectError(payload), handleErrors);
+    return false;
+  }
+
+  if (!hasDefinedProperty(object, current) && handleErrors && !force) {
+    const payload = new Payload(path, 0, object, current);
+    handleError(new UndefinedPropertyError(payload), handleErrors);
+    return false;
+  }
+
+  return helpers.updateDeep(object, [current, ...nested], value, force, handleErrors, path);
 };
 
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {};
+export type UntypedSetMethod = (
+  object: Record<string, any>,
+  path: string,
+  value: any,
+  force?: boolean,
+  throwErrors?: boolean
+) => boolean;
 
+export const untypedSet = set as UntypedSetMethod;
 
 if (import.meta.vitest) {
   const { describe, it, expect, beforeEach } = import.meta.vitest;
-  const { baseObject, variableName } = await import('../mocks');
+  const { baseObject, variableName } = await import('../tests/mocks');
+  const { expectToThrow } = await import('../tests/expects');
   const { get } = await import('./get');
   const { has } = await import('./has');
+
   describe('set', () => {
     let newValue: unknown;
     let objectCopy: typeof baseObject;
     beforeEach(() => {
       newValue = undefined;
-      objectCopy = { ...baseObject };
+      objectCopy = structuredClone(baseObject);
     });
 
     describe('root property', () => {
@@ -121,7 +163,7 @@ if (import.meta.vitest) {
         newValue = false;
         if (set(objectCopy, 'anothernonexistant', newValue as boolean, true)) {
           expect(get(objectCopy, 'anothernonexistant')).toStrictEqual(newValue);
-        };
+        }
       });
     });
 
@@ -146,7 +188,7 @@ if (import.meta.vitest) {
         newValue = 'newValue';
         if (set(objectCopy, 'prop3.nonexistant', newValue, true)) {
           expect(get(objectCopy, 'prop3.nonexistant')).toStrictEqual(newValue);
-        };
+        }
       });
 
       it('should not update if digging existing non-object root property when `force = false`', () => {
@@ -158,20 +200,19 @@ if (import.meta.vitest) {
         expect(get(objectCopy, 'prop1.edited')).toStrictEqual(undefined);
       });
 
-      it('should update if digging existing non-object root property when `force = true`', () => {
+      it('should not update if digging existing non-object root property when `force = true`', () => {
         newValue = 'plop';
-        if (set(objectCopy, 'prop1.edited', newValue as string, true)) {
-          // objectCopy.prop1.edited = 'plop2';
-          // @ts-expect-error investigate better type transform even though this case isn't recommended.
-          expect(get(objectCopy, 'prop1.edited')).toStrictEqual(newValue);
-        };
+        const updated = set(objectCopy, 'prop1.edited', newValue, true);
+        expect(updated).toStrictEqual(false);
+        // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+        expect(get(objectCopy, 'prop1.edited')).toStrictEqual(undefined);
       });
     });
 
     describe('deeply nested property', () => {
       it('should update existing deeply nested property', () => {
         newValue = 'editedString';
-        const updated = set(objectCopy, 'prop3.subprop3.three', newValue as string);
+        const updated = set(objectCopy, 'prop3.subprop3.three', newValue);
         expect(updated).toStrictEqual(true);
         expect(get(objectCopy, 'prop3.subprop3.three')).toStrictEqual(newValue);
       });
@@ -179,7 +220,7 @@ if (import.meta.vitest) {
       it('should not create non-existing nested property when `force = false`', () => {
         newValue = 'newValue';
         // @ts-expect-error Strict mode should error the below line as the target path does not exist.
-        const updated = set(objectCopy, 'prop3.subprop3.nonexistant', newValue as string);
+        const updated = set(objectCopy, 'prop3.subprop3.nonexistant', newValue);
         expect(updated).toStrictEqual(false);
         // @ts-expect-error Strict mode should error the below line as the target path does not exist.
         expect(get(objectCopy, 'prop3.subprop3.nonexistant')).toStrictEqual(undefined);
@@ -187,7 +228,7 @@ if (import.meta.vitest) {
 
       it('should create non-existing nested property when `force = true`', () => {
         newValue = 'newValue';
-        if(set(objectCopy, 'prop3.subprop3.nonexistant', newValue as string, true)) {
+        if (set(objectCopy, 'prop3.subprop3.nonexistant', newValue, true)) {
           expect(get(objectCopy, 'prop3.subprop3.nonexistant')).toStrictEqual(newValue);
         }
       });
@@ -195,7 +236,7 @@ if (import.meta.vitest) {
       it('should not update if digging existing non-object parent property when `force = false`', () => {
         newValue = false;
         // @ts-expect-error Strict mode should error the below line as the target path does not exist.
-        const updated = set(objectCopy, 'prop3.subprop3.three.nested', newValue as boolean);
+        const updated = set(objectCopy, 'prop3.subprop3.three.nested', newValue);
         expect(updated).toStrictEqual(false);
         // @ts-expect-error Strict mode should error the below line as the target path does not exist.
         expect(get(objectCopy, 'prop3.subprop3.three.nested')).toStrictEqual(undefined);
@@ -203,11 +244,10 @@ if (import.meta.vitest) {
 
       it('should not update if digging existing non-object parent property when `force = true`', () => {
         newValue = false;
-        if (set(objectCopy, 'prop3.subprop3.three.nested', newValue as boolean, true)) {
-          // objectCopy.prop3.subprop3.three.nested = true;
-          // @ts-expect-error investigate better type transform even though this case isn't recommended.
-          expect(get(objectCopy, 'prop3.subprop3.three.nested')).toStrictEqual(newValue);
-        }
+        const updated = set(objectCopy, 'prop3.subprop3.three.nested', newValue, true);
+        expect(updated).toStrictEqual(false);
+        // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+        expect(get(objectCopy, 'prop3.subprop3.three.nested')).toStrictEqual(undefined);
       });
     });
 
@@ -245,6 +285,63 @@ if (import.meta.vitest) {
           expect(objectCopy['prop.5']).toHaveProperty('nested.with.name');
         }
       });
+    });
+
+    describe('error handling', () => {
+      it('should not throw when creating non-existing root property and `force = true`', () => {
+        newValue = 'newValue';
+
+        expect(() => set(objectCopy, 'nonexistant', newValue, true, 'throw')).not.toThrow();
+        if (set(objectCopy, 'nonexistant', newValue, true, 'throw')) {
+          expect(objectCopy.nonexistant).toStrictEqual(newValue);
+        }
+      });
+
+      it('should not throw when creating along non-existing root property and `force = true`', () => {
+        newValue = 'newValue';
+
+        expect(() =>
+          set(objectCopy, 'nonexistant.nonexistantsubprop', newValue, true, 'throw')
+        ).not.toThrow();
+        if (set(objectCopy, 'nonexistant.nonexistantsubprop', newValue, true, 'throw')) {
+          expect(objectCopy.nonexistant.nonexistantsubprop).toStrictEqual(newValue);
+        }
+      });
+
+      it('should not throw when traversing non-existing nested property and `force = false`', () => {
+        newValue = 'newValue';
+        expectToThrow(
+          // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+          () => set(objectCopy, 'prop3.nonexistant', newValue, false, 'throw'),
+          UndefinedPropertyError,
+          'prop3',
+          'nonexistant'
+        );
+      });
+
+      it('should throw when traversing non-object path even with `force = true`', () => {
+        newValue = 'newValue';
+        expectToThrow(
+          () => set(objectCopy, 'prop1.edited', newValue, true, 'throw'),
+          SourceNotAnObjectError,
+          'prop1',
+          'edited'
+        );
+      });
+
+      it('should not throw when creating nested property on object path with `force = true`', () => {
+        newValue = 'newValue';
+        expect(() => set(objectCopy, 'prop3.nonexistant', newValue, true, 'throw')).not.toThrow();
+        // @ts-expect-error Strict mode should error the below line as the target path does not exist.
+        expect(get(objectCopy, 'prop3.nonexistant')).toStrictEqual(newValue);
+      });
+    });
+  });
+
+  describe('untyped', () => {
+    it('should not have "Type instantiation is excessively deep and possibly infinite."', () => {
+      const untypedObject = {} as any;
+      untypedSet(untypedObject, 'any.path', 'anyValue');
     });
   });
 }
