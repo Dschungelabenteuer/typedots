@@ -85,9 +85,9 @@ It is mainly used to get finer control over the way typedots' type system behave
       <td>Path you want to get the value from.<br />Possible values should be suggested by your IDE.</td>
     </tr>
     <tr>
-      <td>throwErrors</td>
-      <td><code>boolean</code></td>
-      <td>Whether to throw errors if the path does not resolve (defaults to <code>false</code>)</td>
+      <td>handleErrors</td>
+      <td><code>boolean | "warn" | "throw"</code></td>
+      <td>Whether to handle errors and how to handle them (defaults to <code>false</code>)</td>
     </tr>
     <tr>
       <th colspan="3">
@@ -103,9 +103,9 @@ It is mainly used to get finer control over the way typedots' type system behave
   </tbody>
 </table>
 
-##### Throw behaviour
+##### Error handling
 
-When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` whenever it encounters an unresolvable path instead of returning undefined. Unresolvable path
+When `handleErrors` is set to `"throw"`, Typedots will throw a `InvalidPathError` whenever it encounters an unresolvable path instead of returning undefined. Typedots will only `console.warn` and continue runtime execution. Unresolvable paths include non-existing properties and intermediate properties that are not objects.
 
 ### `set`
 
@@ -152,6 +152,11 @@ When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` wh
       </td>
     </tr>
     <tr>
+      <td>handleErrors</td>
+      <td><code>boolean | "warn" | "throw"</code></td>
+      <td>Whether to handle errors and how to handle them (defaults to <code>false</code>)</td>
+    </tr>
+    <tr>
       <th colspan="3">
         Return type
       </th>
@@ -162,6 +167,10 @@ When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` wh
     </tr>
   </tbody>
 </table>
+
+##### Error handling
+
+When `handleErrors` is set to `"throw"`, Typedots will throw a `InvalidPathError` whenever it encounters an untraversable path instead of just ignoring it. If `force` is set to `true`, Typedots will create nested object structure as long as it doesn't encounter a defined path segment that is not an object.
 
 ### `has`
 
@@ -190,6 +199,11 @@ When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` wh
       <td>Path you want to get the value from.<br />Possible values should be automatically suggested by your IDE.</td>
     </tr>
     <tr>
+      <td>handleErrors</td>
+      <td><code>boolean | "warn" | "throw"</code></td>
+      <td>Whether to handle errors and how to handle them (defaults to <code>false</code>)</td>
+    </tr>
+    <tr>
       <th colspan="3">
         Return type
       </th>
@@ -200,6 +214,10 @@ When `throwErrors` is set to `true`, Typedots will throw a `InvalidPathError` wh
     </tr>
   </tbody>
 </table>
+
+##### Error handling
+
+When `handleErrors` is set to `"throw"`, Typedots will throw a `InvalidPathError` whenever it encounters an unresolvable path instead of returning false. Typedots will only `console.warn` and continue runtime execution. Unresolvable paths include non-existing properties and intermediate properties that are not objects.
 
 > **Note**
 > When one of the properties in the path contains a dot, such property should be wrapped with parentheses so that it does not conflict with typedots inner workings. e.g. `"sites.(my.host.com).ip"`

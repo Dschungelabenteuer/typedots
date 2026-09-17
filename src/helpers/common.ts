@@ -23,7 +23,6 @@ export function validatePath(payload: Payload, handleErrors: Exclude<ErrorHandle
     return _(new SourceNotAnObjectError(payload));
   }
 
-  const isLeaf = payload.index === payload.path.split(pathSplitRegexp).length - 1;
   if (!hasDefinedProperty(payload.source, payload.subpath)) {
     return _(new UndefinedPropertyError(payload));
   }
