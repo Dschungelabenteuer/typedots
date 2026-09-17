@@ -1,5 +1,17 @@
 # typedots
 
+## 0.2.0
+
+### Minor Changes
+
+- [#6](https://github.com/Dschungelabenteuer/typedots/pull/6) [`5d3a1bd`](https://github.com/Dschungelabenteuer/typedots/commit/5d3a1bde1032f4cde03c63d8afaaf03b451a327a) Thanks [@Dschungelabenteuer](https://github.com/Dschungelabenteuer)! - Added the ability to throw errors on invalid paths
+
+- [#6](https://github.com/Dschungelabenteuer/typedots/pull/6) [`219e97a`](https://github.com/Dschungelabenteuer/typedots/commit/219e97a233cdf671357789116a1da36482a03359) Thanks [@Dschungelabenteuer](https://github.com/Dschungelabenteuer)! - Added Untypedots class for runtime-only usage
+
+### Patch Changes
+
+- [#6](https://github.com/Dschungelabenteuer/typedots/pull/6) [`219e97a`](https://github.com/Dschungelabenteuer/typedots/commit/219e97a233cdf671357789116a1da36482a03359) Thanks [@Dschungelabenteuer](https://github.com/Dschungelabenteuer)! - Updated repository stack, switched to oxfmt, oxlint and tsdown, added knip
+
 ## 0.1.0
 
 ### Minor Changes
